@@ -1,17 +1,17 @@
-# Compiler
+# Compiler and Flags
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17
+CXXFLAGS = -I/usr/include/eigen3 -Wall -Wextra -std=c++17
 
-# Target executable
+# Target
 TARGET = quantum_simulator
 
-# Source files
-SRC = src/main.cpp src/qubit_manager.cpp src/gate_engine.cpp
+# Source Files
+SRC = backend/src/main.cpp backend/src/qubit_manager.cpp backend/src/gate_engine.cpp backend/src/utils.cpp
 
-# Build the target
+# Build Rule
 $(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC)
 
-# Clean build artifacts
+# Clean Rule
 clean:
 	rm -f $(TARGET)
