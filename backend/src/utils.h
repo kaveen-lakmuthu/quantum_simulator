@@ -3,7 +3,10 @@
 
 #include <Eigen/Dense>
 
-void printState(const Eigen::VectorXcd& state);
+// Normalize the quantum state vector
 void normalizeState(Eigen::VectorXcd& state);
+
+// Print the quantum state
+void printState(const Eigen::VectorXcd& state);
 
 #endif

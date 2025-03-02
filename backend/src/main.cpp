@@ -1,24 +1,30 @@
 #include <iostream>
 #include "qubit_manager.h"
 #include "gate_engine.h"
-#include "utils.h"
+#include "circuit_manager.h"
 
 int main() {
-    // Initialize a 5-qubit state
     QubitManager qubits(5);
-    qubits.initializeZeroState();
+    CircuitManager circuit;
+    
+    std::cout << "Initial Quantum State:\n";
+    qubits.printState();
 
-    // Print the initial state
-    std::cout << "Initial State:" << std::endl;
-    printState(qubits.getState());
+    // Define quantum circuit
+    circuit.addGate("H", 0);        // Apply Hadamard to qubit 0
+    circuit.addGate("CNOT", 1, 0);  // CNOT with control 0, target 1
+    circuit.addGate("X", 2);        // Apply Pauli-X to qubit 2
+    circuit.addGate("SWAP", 3, 4);  // Swap qubits 3 and 4
+    
+    // Print and execute circuit
+    std::cout << "\nDefined Quantum Circuit:\n";
+    circuit.printCircuit();
 
-    // Apply Pauli-X gate to qubit 2
-    GateEngine gates;
-    gates.applyPauliX(qubits, 2);
-
-    // Print the final state
-    std::cout << "Final State after Pauli-X on qubit 2:" << std::endl;
-    printState(qubits.getState());
+    std::cout << "\nExecuting Quantum Circuit...\n";
+    circuit.executeCircuit(qubits);
+    
+    // Print final state
+    qubits.printState();
 
     return 0;
 }

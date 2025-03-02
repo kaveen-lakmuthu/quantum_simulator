@@ -10,10 +10,11 @@ private:
     int num_qubits;          // Number of qubits
 
 public:
-    QubitManager(int num_qubits);
-    void initializeZeroState();
-    Eigen::VectorXcd& getState();              // Mutable access
+    QubitManager(int num_qubits);  // Constructor
+    void initializeZeroState();    // Sets state to |00000⟩
+    Eigen::VectorXcd& getState();  // Returns reference to state vector
     const Eigen::VectorXcd& getState() const;  // Read-only access
+    void printState() const;       // Prints the quantum state
 };
 
 #endif
