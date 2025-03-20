@@ -5,7 +5,9 @@
 #include <QPushButton>
 #include <QComboBox>
 #include <QVBoxLayout>
+#include <QLineEdit>
 #include "circuit_view.h"
+#include "results_window.h"  
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -21,13 +23,14 @@ private slots:
     void addPauliZGate();
     void addCNOTGate();
     void addSWAPGate();
-    void executeCircuit();
+    void executeCircuitAndShowResults();  
 
 private:
+    QLineEdit *initialStateInput;
     CircuitView *circuitView;
     QComboBox *qubitSelector;
     QComboBox *controlQubitSelector;
-    
+
     QPushButton *executeButton;
     QPushButton *clearButton;
 
@@ -37,6 +40,9 @@ private:
     QPushButton *pauliZButton;
     QPushButton *cnotButton;
     QPushButton *swapButton;
+    QVBoxLayout *mainLayout;
+
+    ResultsWindow *resultsWindow;
 };
 
 #endif // MAINWINDOW_H

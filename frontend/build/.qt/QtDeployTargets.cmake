@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_quantum_simulator_gui_FILE /home/kaveen/Documents/Projects/Finla Year Project/quantum_simulator/frontend/build/quantum_simulator_gui)
+set(__QT_DEPLOY_TARGET_quantum_simulator_gui_TYPE EXECUTABLE)

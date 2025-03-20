@@ -10,10 +10,10 @@ class ResultsWindow : public QWidget {
 
 public:
     explicit ResultsWindow(QWidget *parent = nullptr);
-    void setResults(const QString &resultsText);
+    void setResults(const QString &resultsText);  // Set results in window
 
 private:
-    QLabel *resultsLabel;
+    QLabel *resultsLabel;  // Label to display results
 };
 
 #endif // RESULTS_WINDOW_H

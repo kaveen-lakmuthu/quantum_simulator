@@ -11,4 +11,5 @@ struct QuantumGate {
     int control2 = -1; // Additional control for Toffoli, default -1
 };
 
+
 #endif // QUANTUM_GATE_H

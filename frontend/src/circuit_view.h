@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <vector>
+#include <string>
 #include "../backend/src/circuit_manager.h"
 
 struct QuantumGate {
@@ -17,9 +18,10 @@ class CircuitView : public QWidget {
 public:
     explicit CircuitView(QWidget *parent = nullptr);
     void addGate(const std::string &gate, int target, int control = -1);
-    void executeCircuit();
+    void executeCircuit(const QString &initialState = "");
     void clearCircuit();
     void setQubitCount(int count);
+    QString getCircuitState();
 
 protected:
     void paintEvent(QPaintEvent *event) override;  // Handles drawing the circuit

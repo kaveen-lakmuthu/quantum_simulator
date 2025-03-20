@@ -15,6 +15,8 @@ public:
     Eigen::VectorXcd& getState();  // Returns reference to state vector
     const Eigen::VectorXcd& getState() const;  // Read-only access
     void printState() const;       // Prints the quantum state
+    void setInitialState(const std::string &stateStr);
+
 };
 
 #endif

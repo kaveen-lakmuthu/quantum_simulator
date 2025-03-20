@@ -52,20 +52,26 @@ make -j$(nproc)
 ```
 quantum_simulator/
 │── backend/                # Quantum simulation logic
+|   |
 │   ├── src/                # Source code
+|   |   |
 │   │   ├── main.cpp        # Entry point (CLI mode)
 │   │   ├── qubit_manager.h # Qubit state management
 │   │   ├── gate_engine.h   # Gate operations
-│   │   ├── circuit_manager.h # Circuit execution logic
-│   ├── tests/              # Unit tests
+│   │   +── circuit_manager.h # Circuit execution logic
+|   |
+│   +── tests/              # Unit tests
+|
 │── frontend/               # GUI using Qt6
-│   ├── src/                
-│   │   ├── mainwindow.h    # Main GUI window
-│   │   ├── circuit_view.h  # Visual representation of circuit
-│   │   ├── results_window.h # Output display
+|   |
+│   +── src/                
+│       ├── mainwindow.h    # Main GUI window
+│       ├── circuit_view.h  # Visual representation of circuit
+│       +── results_window.h # Output display
+|
 │── CMakeLists.txt          # Build configuration
 │── README.md               # Project documentation
-│── LICENSE                 # GNU GPL License file
++── LICENSE                 # GNU GPL License file
 ```
 
 ---

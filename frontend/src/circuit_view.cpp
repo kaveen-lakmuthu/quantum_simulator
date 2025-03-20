@@ -1,5 +1,6 @@
 #include "circuit_view.h"
 #include <QPainter>
+#include <QDebug>
 
 CircuitView::CircuitView(QWidget *parent) : QWidget(parent), qubitCount(2) {}
 
@@ -14,9 +15,17 @@ void CircuitView::addGate(const std::string &gate, int target, int control) {
     update();  // Redraw circuit when a gate is added
 }
 
-void CircuitView::executeCircuit() {
+void CircuitView::executeCircuit(const QString &initialState) {
     QubitManager qubitManager(qubitCount);
+
+    // If the user provided an initial state, set it
+    if (!initialState.isEmpty()) {
+        qubitManager.setInitialState(initialState.toStdString());  // Convert QString to std::string
+    }
+
     circuitManager.executeCircuit(qubitManager);
+    
+    qDebug() << "Circuit executed with state: " << initialState;
 }
 
 void CircuitView::clearCircuit() {
@@ -34,11 +43,11 @@ void CircuitView::paintEvent(QPaintEvent *) {
     int height = this->height();
     int qubitSpacing = height / (qubitCount + 1);  // Spacing between qubits
 
-    // 🎵 Draw Qubit Lines
+    // Draw Qubit Lines
     painter.setPen(QPen(Qt::black, 2));
     for (int i = 0; i < qubitCount; ++i) {
         int y = (i + 1) * qubitSpacing;
-        painter.drawLine(20, y, width - 20, y);  // Horizontal qubit lines
+        painter.drawLine(20, y, width - 20, y);
     }
 
     // Draw Gates
@@ -61,4 +70,18 @@ void CircuitView::paintEvent(QPaintEvent *) {
             painter.drawEllipse(QPoint(gateRect.center().x(), controlY), 5, 5);
         }
     }
+}
+
+QString CircuitView::getCircuitState() {
+    QubitManager qubitManager(qubitCount);
+    circuitManager.executeCircuit(qubitManager);  // Run the circuit simulation
+
+    QString resultText;
+    auto state = qubitManager.getState();
+    for (int i = 0; i < state.size(); ++i) {
+        resultText += QString("State %1: %2\n").arg(i).arg(state[i].real());  // Display real part only
+    }
+    
+    qDebug() << "Quantum circuit state generated:\n" << resultText;  // Debugging output
+    return resultText;
 }

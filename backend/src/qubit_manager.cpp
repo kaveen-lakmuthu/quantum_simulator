@@ -33,3 +33,15 @@ void QubitManager::printState() const {
         }
     }
 }
+
+void QubitManager::setInitialState(const std::string &stateString) {
+    if (stateString.length() != num_qubits) {
+        std::cerr << "Invalid initial state length!" << std::endl;
+        return;
+    }
+
+    state.setZero();
+    int index = std::stoi(stateString, nullptr, 2);  // Convert binary string to int
+    state(index) = std::complex<double>(1.0, 0.0);
+}
+
