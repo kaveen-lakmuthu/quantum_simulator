@@ -1,147 +1,177 @@
 #include "mainwindow.h"
 #include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QLabel>
+#include <QComboBox>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QMessageBox>
+
+// MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), resultsWindow(nullptr) {
+//     setWindowTitle("Quantum Circuit Simulator");
+//     resize(800, 600);
+    
+//     circuitView = new CircuitView(this);
+//     setupUI();
+// }
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
-    QWidget *centralWidget = new QWidget(this);
-    setCentralWidget(centralWidget);
-
-    mainLayout = new QVBoxLayout(centralWidget); // Initialize mainLayout
-    circuitView = new CircuitView(this);
-    mainLayout->addWidget(circuitView);
-
-    resultsWindow = new ResultsWindow(this);
-
-    // Initialize Initial State Input
-    QHBoxLayout *initialStateLayout = new QHBoxLayout();
-    QLabel *stateLabel = new QLabel("Initial State:");
-    QLineEdit *initialStateInput = new QLineEdit();
-    initialStateInput->setPlaceholderText("e.g., 00000 for 5 qubits");
-
-    initialStateLayout->addWidget(stateLabel);
-    initialStateLayout->addWidget(initialStateInput);
-    mainLayout->addLayout(initialStateLayout);
-
-    QHBoxLayout *topLayout = new QHBoxLayout();
-    QLabel *label = new QLabel("Select Qubit Count:");
-    qubitSelector = new QComboBox();
-    for (int i = 0; i <= 5; ++i) {
-        qubitSelector->addItem(QString::number(i));
-    }
-    connect(qubitSelector, QOverload<int>::of(&QComboBox::activated), this, &MainWindow::setQubitCount);
-
-    topLayout->addWidget(label);
-    topLayout->addWidget(qubitSelector);
-    mainLayout->addLayout(topLayout);
-
-    QHBoxLayout *qubitSelectionLayout = new QHBoxLayout();
-    QLabel *targetLabel = new QLabel("Target Qubit:");
-    QLabel *controlLabel = new QLabel("Control Qubit:");
+    qDebug() << "Initializing MainWindow...";
     
-    qubitSelector = new QComboBox();
-    controlQubitSelector = new QComboBox();
-
-    for (int i = 0; i < 5; ++i) {
-        qubitSelector->addItem(QString::number(i));
-        controlQubitSelector->addItem(QString::number(i));
+    try {
+        // Initialize with null checks
+        centralWidget = new QWidget(this);
+        if (!centralWidget) throw std::runtime_error("Failed to create central widget");
+        
+        circuitView = new CircuitView(centralWidget);
+        if (!circuitView) throw std::runtime_error("Failed to create circuit view");
+        
+        setupUI();
+        qDebug() << "MainWindow initialized successfully";
+    } catch (const std::exception& e) {
+        qCritical() << "Initialization error:" << e.what();
+        throw;
     }
-
-    qubitSelectionLayout->addWidget(targetLabel);
-    qubitSelectionLayout->addWidget(qubitSelector);
-    qubitSelectionLayout->addWidget(controlLabel);
-    qubitSelectionLayout->addWidget(controlQubitSelector);
-    
-    mainLayout->addLayout(qubitSelectionLayout);
-
-    QHBoxLayout *gateLayout = new QHBoxLayout();
-
-    hadamardButton = new QPushButton("Hadamard");
-    connect(hadamardButton, &QPushButton::clicked, this, &MainWindow::addHadamardGate);
-    gateLayout->addWidget(hadamardButton);
-
-    pauliXButton = new QPushButton("Pauli-X");
-    connect(pauliXButton, &QPushButton::clicked, this, &MainWindow::addPauliXGate);
-    gateLayout->addWidget(pauliXButton);
-
-    pauliYButton = new QPushButton("Pauli-Y");
-    connect(pauliYButton, &QPushButton::clicked, this, &MainWindow::addPauliYGate);
-    gateLayout->addWidget(pauliYButton);
-
-    pauliZButton = new QPushButton("Pauli-Z");
-    connect(pauliZButton, &QPushButton::clicked, this, &MainWindow::addPauliZGate);
-    gateLayout->addWidget(pauliZButton);
-
-    cnotButton = new QPushButton("CNOT");
-    connect(cnotButton, &QPushButton::clicked, this, &MainWindow::addCNOTGate);
-    gateLayout->addWidget(cnotButton);
-
-    swapButton = new QPushButton("SWAP");
-    connect(swapButton, &QPushButton::clicked, this, &MainWindow::addSWAPGate);
-    gateLayout->addWidget(swapButton);
-
-    mainLayout->addLayout(gateLayout);
-
-    QHBoxLayout *buttonLayout = new QHBoxLayout();
-    executeButton = new QPushButton("Execute Circuit");
-    connect(executeButton, &QPushButton::clicked, this, &MainWindow::executeCircuitAndShowResults);  
-    buttonLayout->addWidget(executeButton);
-
-    clearButton = new QPushButton("Clear");
-    connect(clearButton, &QPushButton::clicked, this, [this]() { circuitView->clearCircuit(); });
-    buttonLayout->addWidget(clearButton);
-
-    mainLayout->addLayout(buttonLayout);
 }
 
+void MainWindow::setupUI() {
+    QWidget *centralWidget = new QWidget(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
+    
+    // Initial State Input
+    QHBoxLayout *stateLayout = new QHBoxLayout();
+    stateLayout->addWidget(new QLabel("Initial State:"));
+    initialStateInput = new QLineEdit();
+    initialStateInput->setPlaceholderText("e.g., 0101 for 4 qubits");
+    stateLayout->addWidget(initialStateInput);
+    mainLayout->addLayout(stateLayout);
 
-void MainWindow::setQubitCount(int count) {
+    // Qubit Selection
+    QHBoxLayout *qubitLayout = new QHBoxLayout();
+    qubitLayout->addWidget(new QLabel("Qubit Count:"));
+    qubitSelector = new QComboBox();
+    for (int i = 1; i <= 5; ++i) {
+        qubitSelector->addItem(QString::number(i));
+    }
+    connect(qubitSelector, QOverload<int>::of(&QComboBox::currentIndexChanged),
+            this, &MainWindow::setQubitCount);
+    qubitLayout->addWidget(qubitSelector);
+    mainLayout->addLayout(qubitLayout);
+
+    // Target/Control Qubit Selection
+    QHBoxLayout *selectionLayout = new QHBoxLayout();
+    selectionLayout->addWidget(new QLabel("Target:"));
+    targetQubitSelector = new QComboBox();
+    selectionLayout->addWidget(targetQubitSelector);
+    
+    selectionLayout->addWidget(new QLabel("Control:"));
+    controlQubitSelector = new QComboBox();
+    selectionLayout->addWidget(controlQubitSelector);
+    mainLayout->addLayout(selectionLayout);
+
+    // Circuit View
+    mainLayout->addWidget(circuitView);
+
+    // Gate Buttons
+    setupGateButtons();
+    
+    // Execute/Clear Buttons
+    QHBoxLayout *buttonLayout = new QHBoxLayout();
+    QPushButton *executeButton = new QPushButton("Execute");
+    connect(executeButton, &QPushButton::clicked,
+            this, &MainWindow::executeCircuitAndShowResults);
+    buttonLayout->addWidget(executeButton);
+    
+    QPushButton *clearButton = new QPushButton("Clear");
+    connect(clearButton, &QPushButton::clicked,
+            [this]() { circuitView->clearCircuit(); });
+    buttonLayout->addWidget(clearButton);
+    mainLayout->addLayout(buttonLayout);
+
+    centralWidget->setLayout(mainLayout);
+    setCentralWidget(centralWidget);
+    
+    // Initialize qubit selectors
+    updateQubitSelectors();
+}
+
+void MainWindow::setupGateButtons() {
+    QHBoxLayout *gateLayout = new QHBoxLayout();
+    
+    auto addGateButton = [&](const QString &name, void(MainWindow::*slot)()) {
+        QPushButton *btn = new QPushButton(name);
+        connect(btn, &QPushButton::clicked, this, slot);
+        gateLayout->addWidget(btn);
+    };
+    
+    addGateButton("Hadamard", &MainWindow::addHadamardGate);
+    addGateButton("Pauli-X", &MainWindow::addPauliXGate);
+    addGateButton("Pauli-Y", &MainWindow::addPauliYGate);
+    addGateButton("Pauli-Z", &MainWindow::addPauliZGate);
+    addGateButton("CNOT", &MainWindow::addCNOTGate);
+    addGateButton("SWAP", &MainWindow::addSWAPGate);
+    
+    qobject_cast<QVBoxLayout*>(centralWidget()->layout())->addLayout(gateLayout);
+}
+
+void MainWindow::updateQubitSelectors() {
+    int count = circuitView->getQubitCount();
+    targetQubitSelector->clear();
+    controlQubitSelector->clear();
+    
+    for (int i = 0; i < count; ++i) {
+        targetQubitSelector->addItem(QString::number(i));
+        controlQubitSelector->addItem(QString::number(i));
+    }
+    controlQubitSelector->setCurrentIndex(count > 1 ? 1 : 0);
+}
+
+void MainWindow::setQubitCount() {
+    int count = qubitSelector->currentText().toInt();
     circuitView->setQubitCount(count);
+    updateQubitSelectors();
 }
 
 void MainWindow::addHadamardGate() {
-    circuitView->addGate("Hadamard", qubitSelector->currentIndex());
+    circuitView->addGate("Hadamard", targetQubitSelector->currentIndex());
 }
 
 void MainWindow::addPauliXGate() {
-    circuitView->addGate("Pauli-X", qubitSelector->currentIndex());
+    circuitView->addGate("Pauli-X", targetQubitSelector->currentIndex());
 }
 
 void MainWindow::addPauliYGate() {
-    circuitView->addGate("Pauli-Y", qubitSelector->currentIndex());
+    circuitView->addGate("Pauli-Y", targetQubitSelector->currentIndex());
 }
 
 void MainWindow::addPauliZGate() {
-    circuitView->addGate("Pauli-Z", qubitSelector->currentIndex());
+    circuitView->addGate("Pauli-Z", targetQubitSelector->currentIndex());
 }
 
 void MainWindow::addCNOTGate() {
-    circuitView->addGate("CNOT", controlQubitSelector->currentIndex(), qubitSelector->currentIndex());
+    circuitView->addGate("CNOT", controlQubitSelector->currentIndex(), 
+                        targetQubitSelector->currentIndex());
 }
 
 void MainWindow::addSWAPGate() {
-    circuitView->addGate("SWAP", controlQubitSelector->currentIndex(), qubitSelector->currentIndex());
+    circuitView->addGate("SWAP", controlQubitSelector->currentIndex(),
+                       targetQubitSelector->currentIndex());
 }
 
-// void MainWindow::executeCircuitAndShowResults() {
-//     qDebug() << "Executing circuit...";  // Debugging output
-
-//     circuitView->executeCircuit();  // Runs the quantum simulation
-//     QString results = circuitView->getCircuitState();  // Get results
-
-//     if (!resultsWindow) {  // Make sure the results window is initialized
-//         resultsWindow = new ResultsWindow(this);
-//     }
-
-//     resultsWindow->setResults(results);  // Pass results to the window
-//     resultsWindow->show();               // Open the results window
-//     resultsWindow->raise();              // Bring it to the front
-//     resultsWindow->activateWindow();     // Ensure focus is on the result window
-
-//     qDebug() << "Results window opened";  // Debugging output
-// }
-
 void MainWindow::executeCircuitAndShowResults() {
-    circuitView->executeCircuit(initialStateInput->text());  
-    resultsWindow->setResults(circuitView->getCircuitState());  
-    resultsWindow->show();  
+    try {
+        if (!resultsWindow) {
+            resultsWindow = new ResultsWindow();
+            resultsWindow->setAttribute(Qt::WA_DeleteOnClose);
+        }
+        
+        QString results = circuitView->executeCircuit(initialStateInput->text());
+        resultsWindow->setResults(results);
+        resultsWindow->show();
+        resultsWindow->raise();
+        resultsWindow->activateWindow();
+    } catch (const std::exception &e) {
+        QMessageBox::critical(this, "Error", 
+                             QString("Failed to execute circuit:\n%1").arg(e.what()));
+    }
 }

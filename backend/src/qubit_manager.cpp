@@ -1,18 +1,19 @@
 #include "qubit_manager.h"
 #include <iostream>
 #include <bitset>
+#include <stdexcept>
 
 // Constructor: Initializes the quantum state
 QubitManager::QubitManager(int num_qubits) : num_qubits(num_qubits) {
-    int dimension = 1 << num_qubits; // 2^num_qubits (32 for 5 qubits)
+    int dimension = 1 << num_qubits; // 2^num_qubits (e.g., 32 for 5 qubits)
     state = Eigen::VectorXcd(dimension);
     initializeZeroState();
 }
 
 // Initializes the state to |00000⟩
 void QubitManager::initializeZeroState() {
-    state.setZero();  // Set all elements to 0
-    state(0) = std::complex<double>(1.0, 0.0); // |00000⟩ state
+    state = Eigen::VectorXcd::Zero(1 << num_qubits);  // Ensure full allocation
+    state(0) = std::complex<double>(1.0, 0.0);  // Set initial state to |00000⟩
 }
 
 // Returns a reference to the quantum state vector
@@ -34,14 +35,21 @@ void QubitManager::printState() const {
     }
 }
 
+// Sets an initial quantum state from a binary string (e.g., "00011")
 void QubitManager::setInitialState(const std::string &stateString) {
-    if (stateString.length() != num_qubits) {
-        std::cerr << "Invalid initial state length!" << std::endl;
+    if (static_cast<int>(stateString.length()) != num_qubits) {
+        std::cerr << "Error: Invalid initial state length! Expected " << num_qubits << " bits.\n";
         return;
     }
 
-    state.setZero();
-    int index = std::stoi(stateString, nullptr, 2);  // Convert binary string to int
-    state(index) = std::complex<double>(1.0, 0.0);
+    try {
+        int index = std::stoi(stateString, nullptr, 2);
+        if (index >= (1 << num_qubits)) {  // Ensure index is within range
+            throw std::out_of_range("Initial state index is out of range.");
+        }
+        state.setZero();
+        state(index) = std::complex<double>(1.0, 0.0);
+    } catch (const std::exception &e) {
+        std::cerr << "Error: Invalid initial state format! " << e.what() << std::endl;
+    }
 }
-

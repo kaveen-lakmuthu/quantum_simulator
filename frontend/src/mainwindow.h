@@ -2,12 +2,12 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QPushButton>
-#include <QComboBox>
-#include <QVBoxLayout>
-#include <QLineEdit>
 #include "circuit_view.h"
-#include "results_window.h"  
+#include "results_window.h"
+
+class QComboBox;
+class QPushButton;
+class QLineEdit;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -16,33 +16,28 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
 
 private slots:
-    void setQubitCount(int count);
+    void setQubitCount();
     void addHadamardGate();
     void addPauliXGate();
     void addPauliYGate();
     void addPauliZGate();
     void addCNOTGate();
     void addSWAPGate();
-    void executeCircuitAndShowResults();  
+    void executeCircuitAndShowResults();
+    void updateQubitSelectors();
 
 private:
-    QLineEdit *initialStateInput;
+    void setupUI();
+    void setupGateButtons();
+    void setupQubitSelectors();
+
     CircuitView *circuitView;
+    ResultsWindow *resultsWindow;
+    
     QComboBox *qubitSelector;
     QComboBox *controlQubitSelector;
-
-    QPushButton *executeButton;
-    QPushButton *clearButton;
-
-    QPushButton *hadamardButton;
-    QPushButton *pauliXButton;
-    QPushButton *pauliYButton;
-    QPushButton *pauliZButton;
-    QPushButton *cnotButton;
-    QPushButton *swapButton;
-    QVBoxLayout *mainLayout;
-
-    ResultsWindow *resultsWindow;
+    QComboBox *targetQubitSelector;
+    QLineEdit *initialStateInput;
 };
 
 #endif // MAINWINDOW_H

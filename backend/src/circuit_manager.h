@@ -5,6 +5,7 @@
 #include "gate_engine.h"
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 struct GateOperation {
     std::string gate_name;
@@ -16,7 +17,7 @@ struct GateOperation {
 class CircuitManager {
 private:
     std::vector<GateOperation> circuit;
-    GateEngine gate_engine; // Instance of GateEngine
+    GateEngine gate_engine;
 
 public:
     void addGate(const std::string& gate_name, int target_qubit, int control_qubit1 = -1, int control_qubit2 = -1);

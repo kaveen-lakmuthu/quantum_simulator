@@ -1,4 +1,8 @@
 {
     "C_Cpp.errorSquiggles": "enabled",
-    "cmake.sourceDirectory": "/home/kaveen/Documents/Projects/Finla Year Project/quantum_simulator/frontend"
+    "cmake.sourceDirectory": "/home/kaveen/Documents/Projects/Finla Year Project/quantum_simulator/frontend",
+    "files.associations": {
+        "bitset": "cpp",
+        "algorithm": "cpp"
+    }
 }

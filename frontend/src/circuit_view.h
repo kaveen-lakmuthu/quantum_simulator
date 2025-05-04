@@ -18,18 +18,20 @@ class CircuitView : public QWidget {
 public:
     explicit CircuitView(QWidget *parent = nullptr);
     void addGate(const std::string &gate, int target, int control = -1);
-    void executeCircuit(const QString &initialState = "");
+    QString executeCircuit(const QString &initialState = "");
     void clearCircuit();
     void setQubitCount(int count);
     QString getCircuitState();
+    int getQubitCount() const { return qubitCount; }
 
 protected:
-    void paintEvent(QPaintEvent *event) override;  // Handles drawing the circuit
+    void paintEvent(QPaintEvent *event) override;
 
 private:
+    std::string translateGateName(const std::string &guiName);
     CircuitManager circuitManager;
     int qubitCount;
-    std::vector<QuantumGate> circuitGates;  // Store gates for visualization
+    std::vector<QuantumGate> circuitGates;
 };
 
 #endif // CIRCUIT_VIEW_H

@@ -2,6 +2,7 @@
 #define GATE_ENGINE_H
 
 #include "qubit_manager.h"
+#include <stdexcept>
 
 class GateEngine {
 public:
@@ -15,6 +16,9 @@ public:
     void applyCNOT(QubitManager& qubits, int control_qubit, int target_qubit);
     void applySWAP(QubitManager& qubits, int qubit1, int qubit2);
     void applyToffoli(QubitManager& qubits, int control1, int control2, int target_qubit);
+
+private:
+    void validateQubitIndex(const QubitManager& qubits, int qubit) const;
 };
 
 #endif

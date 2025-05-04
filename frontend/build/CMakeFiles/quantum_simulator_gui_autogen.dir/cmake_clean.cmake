@@ -1,7 +1,6 @@
 file(REMOVE_RECURSE
   "CMakeFiles/quantum_simulator_gui_autogen"
   "quantum_simulator_gui_autogen/mocs_compilation.cpp"
-  "quantum_simulator_gui_autogen/timestamp"
 )
 
 # Per-language clean rules from dependency scanning.
