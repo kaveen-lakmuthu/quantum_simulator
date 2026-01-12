@@ -7,61 +7,74 @@ This document describes the high-level architecture and design of the Quantum Ci
 The simulator follows a layered architecture with clear separation between backend (quantum simulation logic) and frontend (user interface).
 
 ```
-┌─────────────────────────────────────────┐
-│      Qt6 GUI Frontend                   │
-│  ┌────────────────────────────────────┐ │
-│  │ MainWindow (main UI controller)    │ │
-│  │  - Gate button management          │ │
-│  │  - Qubit selection controls        │ │
-│  │  - Circuit execution triggers      │ │
-│  └────────────────────────────────────┘ │
-│  ┌────────────────────────────────────┐ │
-│  │ CircuitView (visual rendering)     │ │
-│  │  - Qubit line drawing              │ │
-│  │  - Gate visualization              │ │
-│  │  - Mouse interaction               │ │
-│  └────────────────────────────────────┘ │
-│  ┌────────────────────────────────────┐ │
-│  │ ResultsWindow (output display)     │ │
-│  │  - State amplitude display         │ │
-│  │  - Probability visualization       │ │
-│  └────────────────────────────────────┘ │
-└─────────────────────────────────────────┘
-           ↓ (Qt signals/slots)
-┌─────────────────────────────────────────┐
-│    C++ Backend Core Simulation          │
-│  ┌────────────────────────────────────┐ │
-│  │ QubitManager                       │ │
-│  │  - Manages quantum state vector    │ │
-│  │  - State initialization            │ │
-│  │  - State representation            │ │
-│  └────────────────────────────────────┘ │
-│  ┌────────────────────────────────────┐ │
-│  │ GateEngine                         │ │
-│  │  - Single-qubit gate operations    │ │
-│  │  - Multi-qubit gate operations     │ │
-│  │  - Gate validation & execution     │ │
-│  └────────────────────────────────────┘ │
-│  ┌────────────────────────────────────┐ │
-│  │ CircuitManager                     │ │
-│  │  - Circuit gate sequence storage   │ │
-│  │  - Circuit execution orchestration │ │
-│  │  - Gate application ordering       │ │
-│  └────────────────────────────────────┘ │
-│  ┌────────────────────────────────────┐ │
-│  │ Utilities                          │ │
-│  │  - State normalization             │ │
-│  │  - State printing                  │ │
-│  │  - Helper functions                │ │
-│  └────────────────────────────────────┘ │
-└─────────────────────────────────────────┘
-           ↓ (Eigen library)
-┌─────────────────────────────────────────┐
-│    Mathematical Foundation              │
-│  - Complex number vectors (VectorXcd)   │
-│  - Linear algebra operations            │
-│  - SIMD optimizations                   │
-└─────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│   Qt6 QML Frontend (Modern Interface)            │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ MainWindow.qml (Declarative UI)              │ │
+│ │  - Three-panel responsive layout             │ │
+│ │  - Qubit selector (1-5 qubits)               │ │
+│ │  - Gate button controls (H,X,Y,Z,CNOT,SWAP)  │ │
+│ │  - Target/Control qubit selectors            │ │
+│ │  - Execute and Clear buttons                 │ │
+│ └──────────────────────────────────────────────┘ │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ CircuitPainter (Custom QML Component)        │ │
+│ │  - Renders qubit lines with |q0⟩ labels      │ │
+│ │  - Draws single-qubit gate boxes             │ │
+│ │  - Shows CNOT (control dot + target circle)  │ │
+│ │  - Displays SWAP (X marks)                   │ │
+│ └──────────────────────────────────────────────┘ │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ State Display Panel (Real-time output)       │ │
+│ │  - Initial quantum state                     │ │
+│ │  - Defined circuit gates list                │ │
+│ │  - Execution status                          │ │
+│ │  - Final quantum state (after execution)     │ │
+│ └──────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────┘
+         ↓ (Qt properties/signals/slots)
+┌──────────────────────────────────────────────────┐
+│    BackendBridge (C++/QML Bridge)                │
+│  - Q_PROPERTY for data binding                   │
+│  - Q_INVOKABLE methods for gate operations       │
+│  - Signal/slot for async communication           │
+│  - Error/success signal handling                 │
+└──────────────────────────────────────────────────┘
+         ↓ (C++ method calls)
+┌──────────────────────────────────────────────────┐
+│    C++ Backend Core Simulation                   │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ QubitManager                                 │ │
+│ │  - Manages quantum state vector              │ │
+│ │  - State initialization                      │ │
+│ │  - State representation                      │ │
+│ └──────────────────────────────────────────────┘ │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ GateEngine                                   │ │
+│ │  - Single-qubit gate operations              │ │
+│ │  - Multi-qubit gate operations               │ │
+│ │  - Gate validation & execution               │ │
+│ └──────────────────────────────────────────────┘ │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ CircuitManager                               │ │
+│ │  - Circuit gate sequence storage             │ │
+│ │  - Circuit execution orchestration           │ │
+│ │  - Gate application ordering                 │ │
+│ └──────────────────────────────────────────────┘ │
+│ ┌──────────────────────────────────────────────┐ │
+│ │ Utilities                                    │ │
+│ │  - State normalization                       │ │
+│ │  - State printing                            │ │
+│ │  - Helper functions                          │ │
+│ └──────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────┘
+         ↓ (Eigen library)
+┌──────────────────────────────────────────────────┐
+│    Mathematical Foundation                       │
+│  - Complex number vectors (VectorXcd)            │
+│  - Linear algebra operations                     │
+│  - SIMD optimizations                            │
+└──────────────────────────────────────────────────┘
 ```
 
 ## Component Details
@@ -239,6 +252,137 @@ void GateEngine::applyGateName(QubitManager& qubits, int target) {
     state = new_state;
 }
 ```
+
+## Frontend Architecture (QML/Qt Quick)
+
+### Overview
+The modern QML frontend provides a declarative, responsive interface for quantum circuit design and visualization.
+
+### Key Components
+
+#### MainWindow.qml
+**Purpose**: Main application container and layout
+
+**Structure**:
+- **Header**: Application title with integrated qubit selector (1-5 range)
+- **Three-Panel Layout**:
+  1. **Left Panel**: Gate control buttons
+     - Single-qubit gates (H, X, Y, Z) with target qubit selector
+     - Multi-qubit gates (CNOT, SWAP) with control/target selectors
+     - Execute and Clear buttons
+  2. **Center Panel**: Circuit visualization (split view)
+     - Top: CircuitPainter custom component showing qubit lines and gate symbols
+     - Bottom: ListView displaying gate sequence list
+  3. **Right Panel**: Execution flow display
+     - Scrollable text showing initial state, circuit definition, execution status, final state
+
+**Properties**:
+- Binds to `backend.qubitCount`, `backend.circuitGates`, `backend.quantumState`
+- Listens for `backend.executionError` signal
+- Shows success/error messages with auto-hide timers
+
+**Color Scheme** (Catppuccin Dark):
+- Background: `#1e1e2e`
+- Accent: `#89b4fa`
+- Panels: `#313244`
+- Text: `#cdd6f4`
+
+#### CircuitPainter (Custom QML Type)
+**File**: `circuit_painter.h/cpp`
+
+**Purpose**: Custom QQuickPaintedItem for rendering quantum circuit diagrams
+
+**Rendering Features**:
+- Draws horizontal qubit lines with labels (|q0⟩, |q1⟩, etc.)
+- Single-qubit gates: Colored boxes with gate names
+- CNOT gates: Control dot on control qubit, target circle + plus on target qubit
+- SWAP gates: X marks on both qubits
+- Spacing constants: `GATE_SPACING=80`, `QUBIT_SPACING=60`
+
+**Data Binding**:
+- Q_PROPERTY `qubitCount`: Bound to backend qubit count
+- Q_PROPERTY `gates`: QStringList of gate descriptions
+
+**Gate Parsing**:
+- Uses QRegularExpression to parse gate strings
+- Supports formats: "H(q0)", "CNOT(ctrl=0, target=1)", "SWAP(q3 <-> q4)"
+
+#### BackendBridge (C++/QML Bridge)
+**File**: `backend_bridge.h/cpp`
+
+**Purpose**: Exposes C++ quantum backend to QML layer
+
+**Q_PROPERTY Bindings** (for automatic UI updates):
+- `qubitCount`: Current number of qubits
+- `quantumState`: Formatted final quantum state
+- `initialState`: Initial state before circuit execution
+- `circuitDescription`: Summary of circuit
+- `circuitGates`: QStringList of gate descriptions
+- `circuitExecuted`: Boolean tracking execution state
+
+**Q_INVOKABLE Methods** (callable from QML):
+- `setQubitCount(int)`: Change qubit count
+- `setInitialState(QString)`: Set initial binary state
+- `addGate(QString, int, int, int)`: Add gate to circuit
+- `executeCircuit()`: Run circuit simulation
+- `clearCircuit()`: Reset circuit and state
+- `getAvailableQubits()`: Return qubit indices
+
+**Signal Emissions**:
+- `quantumStateChanged()`: When state updates
+- `initialStateChanged()`: When initial state changes
+- `circuitChanged()`: When circuit gates change
+- `circuitExecutedChanged()`: When execution state changes
+- `executionError(QString)`: On errors
+- `executionSuccess()`: On successful execution
+
+### Data Flow
+
+```
+User clicks gate button
+    ↓
+QML calls: backend.addGate(...)
+    ↓
+BackendBridge::addGate()
+    ↓
+CircuitManager adds gate
+    ↓
+BackendBridge emits circuitChanged()
+    ↓
+QML property circuitGates updates
+    ↓
+MainWindow.qml re-renders
+    ├→ CircuitPainter repaints diagram
+    └→ ListView updates gate list
+
+User clicks Execute
+    ↓
+QML calls: backend.executeCircuit()
+    ↓
+BackendBridge::executeCircuit()
+    ├→ Save initial state
+    ├→ GateEngine applies each gate via CircuitManager
+    └→ Emit circuitExecutedChanged(), quantumStateChanged()
+    ↓
+QML properties update
+    ↓
+MainWindow.qml shows complete execution flow
+    ├→ Initial state (from property)
+    ├→ Circuit definition (from gates list)
+    ├→ Execution status message
+    └→ Final state (from quantumState property)
+```
+
+### Resource Management
+
+#### resources.qrc
+Qt resource file for embedding QML and assets. Currently configured for filesystem loading during development, can be switched to embedded resources for production.
+
+#### Build Integration
+- CMakeLists.txt finds Qt6 Qml and Quick modules
+- Qt AutoMOC generates moc files for Q_OBJECT classes
+- Qt RCC compiles resources.qrc
+- Main executable links Qt6::Qml and Qt6::Quick libraries
 
 ## Performance Characteristics
 

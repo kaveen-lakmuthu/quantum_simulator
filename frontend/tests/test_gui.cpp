@@ -1,80 +1,122 @@
 #include <QtTest/QtTest>
-#include <QApplication>
-#include "src/circuit_view.h"
-#include "src/mainwindow.h"
-#include "src/results_window.h"
+#include <QCoreApplication>
+#include "src/backend_bridge.h"
 
-class CircuitViewTest : public QObject {
+/// @file test_gui.cpp
+/// @brief Unit tests for BackendBridge QML interface
+///
+/// Tests the C++/QML bridge layer that exposes quantum backend functionality
+/// to the QML frontend. Validates property bindings, signal emissions, and
+/// quantum operation execution through the bridge.
+
+class BackendBridgeTest : public QObject {
     Q_OBJECT
 private slots:
     void initTestCase() {
-        // Initial state sanity
-        CircuitView view;
-        QCOMPARE(view.getQubitCount(), 2);
+        // Backend initializes with 5 qubits in |00000⟩ state
+    }
+
+    void testQubitCountProperty() {
+        BackendBridge bridge;
+        QCOMPARE(bridge.getQubitCount(), 5);
     }
 
     void testSetQubitCountValid() {
-        CircuitView view;
-        view.setQubitCount(3);
-        QCOMPARE(view.getQubitCount(), 3);
+        BackendBridge bridge;
+        bridge.setQubitCount(3);
+        QCOMPARE(bridge.getQubitCount(), 3);
     }
 
     void testSetQubitCountInvalid() {
-        CircuitView view;
-        bool threw = false;
-        try { view.setQubitCount(0); } catch (const std::invalid_argument&) { threw = true; }
-        QVERIFY(threw);
-        threw = false;
-        try { view.setQubitCount(6); } catch (const std::invalid_argument&) { threw = true; }
-        QVERIFY(threw);
+        BackendBridge bridge;
+        bridge.setQubitCount(0);  // Out of range
+        QCOMPARE(bridge.getQubitCount(), 5);  // Should remain unchanged
+        bridge.setQubitCount(6);  // Out of range
+        QCOMPARE(bridge.getQubitCount(), 5);  // Should remain unchanged
+    }
+
+    void testInitialStateTracking() {
+        BackendBridge bridge;
+        bridge.setQubitCount(2);
+        QString initial = bridge.getInitialState();
+        QVERIFY(initial.contains("| 00 ⟩"));
+        QCOMPARE(bridge.isCircuitExecuted(), false);
     }
 
     void testAddGateAndExecuteBellState() {
-        CircuitView view;
-        view.setQubitCount(2);
-        view.clearCircuit();
-        view.addGate("Hadamard", 0);
-        // CNOT with control=0, target=1 → pass target first then control
-        view.addGate("CNOT", 1, 0);
-        QString results = view.executeCircuit("");
-        QVERIFY(results.contains("|00"));
-        QVERIFY(results.contains("|11"));
+        BackendBridge bridge;
+        bridge.setQubitCount(2);
+        
+        // Build Bell state circuit
+        bridge.addGate("H", 0);
+        bridge.addGate("CNOT", 1, 0);
+        
+        QStringList gates = bridge.getCircuitGates();
+        QCOMPARE(gates.size(), 2);
+        
+        // Execute circuit
+        bridge.executeCircuit();
+        QCOMPARE(bridge.isCircuitExecuted(), true);
+        
+        // Check final state contains both |00⟩ and |11⟩
+        QString finalState = bridge.getQuantumState();
+        QVERIFY(finalState.contains("| 00 ⟩"));
+        QVERIFY(finalState.contains("| 11 ⟩"));
     }
 
     void testClearCircuit() {
-        CircuitView view;
-        view.setQubitCount(2);
-        view.addGate("Hadamard", 0);
-        view.clearCircuit();
-        QString results = view.executeCircuit("");
-        QVERIFY(results.contains("|00")); // default state |00⟩
+        BackendBridge bridge;
+        bridge.setQubitCount(2);
+        bridge.addGate("H", 0);
+        
+        QStringList before = bridge.getCircuitGates();
+        QCOMPARE(before.size(), 1);
+        
+        bridge.clearCircuit();
+        
+        QStringList after = bridge.getCircuitGates();
+        QCOMPARE(after.size(), 0);
+        QCOMPARE(bridge.isCircuitExecuted(), false);
+    }
+
+    void testExecutionFlow() {
+        BackendBridge bridge;
+        bridge.setQubitCount(1);
+        
+        // Get initial state
+        QString initial = bridge.getInitialState();
+        QVERIFY(!initial.isEmpty());
+        
+        // Add gate
+        bridge.addGate("H", 0);
+        QCOMPARE(bridge.isCircuitExecuted(), false);
+        
+        // Execute
+        bridge.executeCircuit();
+        QCOMPARE(bridge.isCircuitExecuted(), true);
+        
+        // Final state should be superposition (H gate on |0⟩)
+        QString final = bridge.getQuantumState();
+        QVERIFY(!final.isEmpty());
+        QVERIFY(final.contains("⟩"));
+    }
+
+    void testAvailableQubits() {
+        BackendBridge bridge;
+        bridge.setQubitCount(3);
+        
+        QStringList qubits = bridge.getAvailableQubits();
+        QCOMPARE(qubits.size(), 3);
+        QCOMPARE(qubits[0], "0");
+        QCOMPARE(qubits[1], "1");
+        QCOMPARE(qubits[2], "2");
     }
 };
 
-class ResultsWindowTest : public QObject {
-    Q_OBJECT
-private slots:
-    void testResultsWindowSetAndClear() {
-        ResultsWindow win;
-        win.setResults("|00⟩: 1.0000 + 0.0000i\n");
-        // No direct getter; ensure it doesn't crash
-        win.clearResults();
-        QVERIFY(true);
-    }
-};
-
-// Use QTEST_MAIN for each test class separately isn't possible; create a runner.
 int main(int argc, char** argv) {
-    QApplication app(argc, argv);
-    int status = 0;
-    {
-        CircuitViewTest tc; status |= QTest::qExec(&tc, argc, argv);
-    }
-    {
-        ResultsWindowTest tc; status |= QTest::qExec(&tc, argc, argv);
-    }
-    return status;
+    QCoreApplication app(argc, argv);
+    BackendBridgeTest test;
+    return QTest::qExec(&test, argc, argv);
 }
 
-// Required for Qt's AutoMOC when Q_OBJECT is used in a .cpp file
 #include "test_gui.moc"

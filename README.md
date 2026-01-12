@@ -4,7 +4,9 @@ A high-performance quantum circuit simulator with a Qt-based graphical interface
 
 ## Features
 
-- Graphical quantum circuit editor for visual circuit design
+- Graphical quantum circuit editor for visual circuit design with modern QML interface
+- Real-time quantum state visualization with Ket notation (| ψ ⟩ format)
+- Visual circuit diagram showing qubit lines and gate symbols
 - Backend simulation engine using Eigen library for efficient linear algebra operations
 - Comprehensive gate support: Hadamard, Pauli-X/Y/Z, CNOT, SWAP, and Toffoli gates
 - Multi-qubit operations and controlled gates
@@ -47,13 +49,27 @@ make quantum_simulator
 ./quantum_simulator
 ```
 
-### Build Frontend (GUI Application)
+### Build Frontend (GUI Application with Modern QML/Qt Quick)
+
+**Dependencies**: Qt6 with declarative and quick modules
+```bash
+sudo apt install qt6-declarative-dev
+```
+
+**Build Instructions**:
 ```bash
 cd frontend/build
 cmake ..
 make -j$(nproc)
 ./quantum_simulator_gui
 ```
+
+The frontend features a modern dark-themed QML interface with:
+- Professional Catppuccin-inspired color scheme
+- Real-time quantum state visualization with ket notation
+- Circuit visualization showing qubit lines and gate symbols
+- Responsive three-panel layout (controls, circuit, state display)
+- Integrated results with initial state, circuit definition, and final quantum state
 
 ### Build and Run Tests
 
@@ -91,12 +107,23 @@ The backend provides an interactive CLI for quantum circuit design:
 
 See [Usage Guide](docs/USAGE.md) for detailed examples.
 
-### Graphical Interface
-1. Launch the GUI application: `./quantum_simulator_gui`
-2. Select number of qubits (1-5)
-3. Click gate buttons to build circuit
-4. Click "Execute" to run simulation
-5. View results in output window
+### Graphical Interface (QML/Qt Quick)
+
+1. Launch the modern QML-based GUI: `./quantum_simulator_gui`
+2. **Header**: Select number of qubits (1-5 selector dropdown)
+3. **Left Panel**: Gate operations organized by type
+   - Single-qubit gates (H, X, Y, Z) with target qubit selector
+   - Multi-qubit gates (CNOT, SWAP) with control/target selectors
+4. **Center Panel**: 
+   - Top: Visual circuit diagram showing qubit lines and gate symbols
+   - Bottom: Scrollable gate sequence list
+5. **Right Panel**: Complete execution flow showing:
+   - Initial quantum state (| 00000 ⟩ format)
+   - Defined quantum circuit (all added gates)
+   - Execution status
+   - Final quantum state after execution
+6. Click **Execute** to run the circuit simulation
+7. Click **Clear** to reset the circuit
 
 See [Getting Started](docs/GETTING_STARTED.md) for installation help.
 
@@ -115,12 +142,13 @@ quantum_simulator/
 │       ├── test_qubit_manager.cpp
 │       ├── test_gate_engine.cpp
 │       └── test_circuit_manager.cpp
-├── frontend/                   # Qt6 GUI application
+├── frontend/                   # Qt6 GUI application (QML/Qt Quick)
 │   ├── src/
-│   │   ├── main.cpp            # GUI entry point
-│   │   ├── mainwindow.cpp      # Main window implementation
-│   │   ├── circuit_view.cpp    # Circuit visualization
-│   │   └── results_window.cpp  # Results display
+│   │   ├── main_qml.cpp        # QML entry point
+│   │   ├── MainWindow.qml      # Declarative UI layout
+│   │   ├── backend_bridge.h/.cpp  # C++/QML property bridge
+│   │   ├── circuit_painter.h/.cpp # Custom circuit visualization
+│   │   └── resources.qrc       # QML resources
 │   └── CMakeLists.txt
 ├── makefile                    # Build configuration
 ├── test_gates_manual.cpp       # Manual test suite

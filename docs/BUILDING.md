@@ -76,28 +76,29 @@ Run sanity check:
 # Should display quantum state output without errors
 ```
 
-### Building Frontend (GUI)
+### Building Frontend (GUI with Modern QML/Qt Quick Interface)
 
-#### Prerequisites for GUI
+#### Prerequisites for QML Frontend
 
-Ensure Qt6 is installed:
+Ensure Qt6 with declarative and quick modules is installed:
 
 ```bash
 pkg-config --modversion Qt6Core
 pkg-config --modversion Qt6Gui
-pkg-config --modversion Qt6Widgets
+pkg-config --modversion Qt6Qml
+pkg-config --modversion Qt6Quick
 ```
 
-If not installed, install first:
+If not installed, install complete Qt6 with QML support:
 ```bash
 # Ubuntu/Debian
-sudo apt install qt6-base-dev
+sudo apt install qt6-base-dev qt6-declarative-dev
 
 # Arch
-sudo pacman -S qt6-base
+sudo pacman -S qt6-base qt6-declarative
 ```
 
-#### Building GUI Steps
+#### Building QML GUI Steps
 
 ```bash
 # Navigate to frontend
@@ -107,15 +108,22 @@ cd frontend
 mkdir -p build
 cd build
 
-# Generate build files with CMake
+# Generate build files with CMake (includes QML components)
 cmake ..
 
 # Build with maximum parallel jobs
 make -j$(nproc)
 
-# Verify executable exists
+# Verify executable exists and has no errors
 ./quantum_simulator_gui
 ```
+
+The QML frontend provides:
+- Modern dark-themed interface (Catppuccin color scheme)
+- Real-time quantum state visualization in Ket notation
+- Visual circuit diagram with qubit lines and gate symbols
+- Comprehensive execution flow display (initial state → circuit → final state)
+- Responsive three-panel layout (controls, circuit visualization, state display)
 
 #### Custom CMake Configuration
 
@@ -124,6 +132,8 @@ For non-standard installations:
 ```bash
 cmake .. -DCMAKE_PREFIX_PATH=/path/to/qt6/installation
 ```
+
+Make sure the path includes both base Qt6 and declarative modules.
 
 ### Building Test Suite
 
