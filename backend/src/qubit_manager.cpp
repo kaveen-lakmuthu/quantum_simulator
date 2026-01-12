@@ -2,18 +2,23 @@
 #include <iostream>
 #include <bitset>
 #include <stdexcept>
+#include <cmath>
 
-// Constructor: Initializes the quantum state
-QubitManager::QubitManager(int num_qubits) : num_qubits(num_qubits) {
-    int dimension = 1 << num_qubits; // 2^num_qubits (e.g., 32 for 5 qubits)
+// Constructor: Initializes quantum state to |00...0⟩
+QubitManager::QubitManager(int numQubits) : num_qubits(numQubits) {
+    if (numQubits < 1 || numQubits > MAX_QUBITS) {
+        throw std::invalid_argument("Number of qubits must be between 1 and " + 
+                                    std::to_string(MAX_QUBITS));
+    }
+    int dimension = 1 << numQubits;  // 2^numQubits
     state = Eigen::VectorXcd(dimension);
     initializeZeroState();
 }
 
-// Initializes the state to |00000⟩
+// Initializes state to |00...0⟩ (ground state)
 void QubitManager::initializeZeroState() {
-    state = Eigen::VectorXcd::Zero(1 << num_qubits);  // Ensure full allocation
-    state(0) = std::complex<double>(1.0, 0.0);  // Set initial state to |00000⟩
+    state = Eigen::VectorXcd::Zero(1 << num_qubits);
+    state(0) = std::complex<double>(1.0, 0.0);  // Set amplitude at |0...0⟩ to 1
 }
 
 // Returns a reference to the quantum state vector
@@ -26,30 +31,38 @@ const Eigen::VectorXcd& QubitManager::getState() const {
     return state;
 }
 
-// Prints the quantum state in binary format
+// Returns the number of qubits
+int QubitManager::getNumQubits() const {
+    return num_qubits;
+}
+
+// Prints quantum state amplitudes above threshold
 void QubitManager::printState() const {
     for (int i = 0; i < state.size(); ++i) {
-        if (std::abs(state(i)) > 1e-10) { // Ignore near-zero amplitudes
+        // Only display amplitudes above threshold to avoid numerical noise
+        if (std::abs(state(i)) > AMPLITUDE_THRESHOLD) {
             std::cout << "| " << std::bitset<5>(i) << " ⟩ : " << state(i) << std::endl;
         }
     }
 }
 
-// Sets an initial quantum state from a binary string (e.g., "00011")
-void QubitManager::setInitialState(const std::string &stateString) {
+// Sets quantum state from binary string (e.g., "00101")
+void QubitManager::setInitialState(const std::string& stateString) {
     if (static_cast<int>(stateString.length()) != num_qubits) {
-        std::cerr << "Error: Invalid initial state length! Expected " << num_qubits << " bits.\n";
-        return;
+        throw std::invalid_argument("Initial state length (" + std::to_string(stateString.length()) +
+                                    ") must match qubit count (" + std::to_string(num_qubits) + ")");
     }
 
     try {
+        // Convert binary string to decimal index
         int index = std::stoi(stateString, nullptr, 2);
-        if (index >= (1 << num_qubits)) {  // Ensure index is within range
-            throw std::out_of_range("Initial state index is out of range.");
+        if (index >= (1 << num_qubits)) {
+            throw std::out_of_range("State index exceeds valid range for " +
+                                    std::to_string(num_qubits) + " qubits");
         }
         state.setZero();
         state(index) = std::complex<double>(1.0, 0.0);
-    } catch (const std::exception &e) {
-        std::cerr << "Error: Invalid initial state format! " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        throw std::invalid_argument("Failed to parse initial state: " + std::string(e.what()));
     }
 }

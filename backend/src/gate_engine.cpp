@@ -5,154 +5,104 @@
 #include <cmath>
 
 void GateEngine::validateQubitIndex(const QubitManager& qubits, int qubit) const {
-    if (qubit < 0 || qubit >= qubits.getState().size()) {
+    if (qubit < 0 || qubit >= qubits.getNumQubits()) {
         throw std::out_of_range("Qubit index out of range: " + std::to_string(qubit));
     }
 }
 
-void GateEngine::applyPauliX(QubitManager& qubits, int target_qubit) {
-    validateQubitIndex(qubits, target_qubit);
+void GateEngine::applyPauliX(QubitManager& qubits, int targetQubit) {
+    validateQubitIndex(qubits, targetQubit);
     Eigen::VectorXcd& state = qubits.getState();
     int dimension = state.size();
 
+    // Pauli-X (bit flip): swap amplitudes of basis states differing in target qubit
     for (int i = 0; i < dimension; ++i) {
-        int flipped_index = i ^ (1 << target_qubit);
+        int flipped_index = i ^ (1 << targetQubit);
         if (flipped_index > i) {
             std::swap(state(i), state(flipped_index));
         }
     }
 }
 
-void GateEngine::applyPauliY(QubitManager& qubits, int target_qubit) {
-    validateQubitIndex(qubits, target_qubit);
+void GateEngine::applyPauliY(QubitManager& qubits, int targetQubit) {
+    validateQubitIndex(qubits, targetQubit);
     Eigen::VectorXcd& state = qubits.getState();
     int dimension = state.size();
 
+    // Pauli-Y gate: |0⟩ -> i|1⟩, |1⟩ -> -i|0⟩
     for (int i = 0; i < dimension; ++i) {
-        if ((i >> target_qubit) & 1) {
-            int swap_index = i ^ (1 << target_qubit);
-            std::complex<double> phase(0, 1);
-            std::swap(state(i), state(swap_index));
-            state(swap_index) *= phase;
-            state(i) *= -phase;
+        int flipped_index = i ^ (1 << targetQubit);
+        if (flipped_index > i) {  // Process each pair once
+            std::complex<double> temp = state(i);
+            state(i) = -IMAGINARY_UNIT * state(flipped_index);
+            state(flipped_index) = IMAGINARY_UNIT * temp;
         }
     }
 }
 
-void GateEngine::applyPauliZ(QubitManager& qubits, int target_qubit) {
-    validateQubitIndex(qubits, target_qubit);
+void GateEngine::applyPauliZ(QubitManager& qubits, int targetQubit) {
+    validateQubitIndex(qubits, targetQubit);
     Eigen::VectorXcd& state = qubits.getState();
     int dimension = state.size();
 
+    // Pauli-Z gate: applies -1 phase to |1⟩ states
     for (int i = 0; i < dimension; ++i) {
-        if ((i >> target_qubit) & 1) {
+        if ((i >> targetQubit) & 1) {
             state(i) = -state(i);
         }
     }
 }
 
-void GateEngine::applyHadamard(QubitManager& qubits, int target_qubit) {
-    validateQubitIndex(qubits, target_qubit);
+void GateEngine::applyHadamard(QubitManager& qubits, int targetQubit) {
+    validateQubitIndex(qubits, targetQubit);
     Eigen::VectorXcd& state = qubits.getState();
     int dimension = state.size();
-    const double sqrt2 = 1.0 / std::sqrt(2.0);
 
+    // Hadamard gate: creates superposition. H|0⟩ = (|0⟩+|1⟩)/√2, H|1⟩ = (|0⟩-|1⟩)/√2
     Eigen::VectorXcd new_state = Eigen::VectorXcd::Zero(dimension);
 
     for (int i = 0; i < dimension; ++i) {
-        if ((i >> target_qubit) & 1) {
-            new_state[i] = (state[i ^ (1 << target_qubit)] - state[i]) * sqrt2;
+        if ((i >> targetQubit) & 1) {
+            new_state[i] = (state[i ^ (1 << targetQubit)] - state[i]) * INVERSE_SQRT2;
         } else {
-            new_state[i] = (state[i] + state[i ^ (1 << target_qubit)]) * sqrt2;
+            new_state[i] = (state[i] + state[i ^ (1 << targetQubit)]) * INVERSE_SQRT2;
         }
     }
     state = new_state;
 }
 
-// void GateEngine::applyCNOT(QubitManager& qubits, int control_qubit, int target_qubit) {
-//     validateQubitIndex(qubits, control_qubit);
-//     validateQubitIndex(qubits, target_qubit);
-//     if (control_qubit == target_qubit) {
-//         throw std::invalid_argument("Control and target qubits must be different");
-//     }
-
-//     Eigen::VectorXcd& state = qubits.getState();
-//     int dimension = state.size();
-
-//     for (int i = 0; i < dimension; ++i) {
-//         if ((i >> control_qubit) & 1) {
-//             int target_index = i ^ (1 << target_qubit);
-//             std::swap(state[i], state[target_index]);
-//         }
-//     }
-// }
-
-// void GateEngine::applyCNOT(QubitManager& qubits, int control_qubit, int target_qubit) {
-//     validateQubitIndex(qubits, control_qubit);
-//     validateQubitIndex(qubits, target_qubit);
-//     if (control_qubit == target_qubit) {
-//         throw std::invalid_argument("Control and target qubits must be different");
-//     }
-
-//     Eigen::VectorXcd& state = qubits.getState();
-//     int dimension = state.size();
-//     Eigen::VectorXcd new_state = state; // Copy the current state
-
-//     for (int i = 0; i < dimension; ++i) {
-//         if ((i >> control_qubit) & 1) {  // If control qubit is |1⟩
-//             int target_index = i ^ (1 << target_qubit);  // Flip target qubit
-//             new_state[target_index] = state[i];  // Move amplitude
-//             new_state[i] = state[target_index];  // Swap amplitudes
-//         }
-//     }
-
-//     state = new_state;  // Update the state
-// }
-
-void GateEngine::applyCNOT(QubitManager& qubits, int control_qubit, int target_qubit) {
-    validateQubitIndex(qubits, control_qubit);
-    validateQubitIndex(qubits, target_qubit);
-    if (control_qubit == target_qubit) return;
+void GateEngine::applyCNOT(QubitManager& qubits, int controlQubit, int targetQubit) {
+    validateQubitIndex(qubits, controlQubit);
+    validateQubitIndex(qubits, targetQubit);
+    if (controlQubit == targetQubit) {
+        throw std::invalid_argument("Control and target qubits must be different");
+    }
 
     Eigen::VectorXcd& state = qubits.getState();
     int dimension = state.size();
-    Eigen::VectorXcd new_state = state;
 
+    // CNOT gate: if control qubit is |1⟩, flip the target qubit
     for (int i = 0; i < dimension; ++i) {
-        if ((i >> control_qubit) & 1) {  // If control qubit is |1⟩
-            int target_index = i ^ (1 << target_qubit);  // Flip target qubit
-            new_state[target_index] = state[i];
-            new_state[i] = state[target_index];
+        if ((i >> controlQubit) & 1) {
+            int target_index = i ^ (1 << targetQubit);
+            if (target_index > i) {  // Only swap once per pair
+                std::swap(state(i), state(target_index));
+            }
         }
     }
-
-    state = new_state;
 }
-
-// void GateEngine::applySWAP(QubitManager& qubits, int qubit1, int qubit2) {
-//     validateQubitIndex(qubits, qubit1);
-//     validateQubitIndex(qubits, qubit2);
-//     if (qubit1 == qubit2) return;
-
-//     Eigen::VectorXcd& state = qubits.getState();
-//     int dimension = state.size();
-
-//     for (int i = 0; i < dimension; ++i) {
-//         int swapped_index = (i ^ (1 << qubit1)) ^ (1 << qubit2);
-//         if (swapped_index > i) {
-//             std::swap(state(i), state(swapped_index));
-//         }
-//     }
-// }
 
 void GateEngine::applySWAP(QubitManager& qubits, int qubit1, int qubit2) {
     validateQubitIndex(qubits, qubit1);
     validateQubitIndex(qubits, qubit2);
-    if (qubit1 == qubit2) return;
+    if (qubit1 == qubit2) {
+        throw std::invalid_argument("SWAP gate requires distinct qubits");
+    }
 
     Eigen::VectorXcd& state = qubits.getState();
     int dimension = state.size();
 
+    // SWAP gate: exchange states of qubit1 and qubit2
     for (int i = 0; i < dimension; ++i) {
         // Only process if qubit1 and qubit2 have different values
         if (((i >> qubit1) & 1) != ((i >> qubit2) & 1)) {
@@ -164,20 +114,21 @@ void GateEngine::applySWAP(QubitManager& qubits, int qubit1, int qubit2) {
     }
 }
 
-void GateEngine::applyToffoli(QubitManager& qubits, int control1, int control2, int target_qubit) {
+void GateEngine::applyToffoli(QubitManager& qubits, int control1, int control2, int targetQubit) {
     validateQubitIndex(qubits, control1);
     validateQubitIndex(qubits, control2);
-    validateQubitIndex(qubits, target_qubit);
-    if (control1 == control2 || control1 == target_qubit || control2 == target_qubit) {
+    validateQubitIndex(qubits, targetQubit);
+    if (control1 == control2 || control1 == targetQubit || control2 == targetQubit) {
         throw std::invalid_argument("Toffoli gate requires distinct qubits");
     }
 
     Eigen::VectorXcd& state = qubits.getState();
     int dimension = state.size();
 
+    // Toffoli (CCX) gate: flip target if both controls are |1⟩
     for (int i = 0; i < dimension; ++i) {
         if (((i >> control1) & 1) && ((i >> control2) & 1)) {
-            int target_index = i ^ (1 << target_qubit);
+            int target_index = i ^ (1 << targetQubit);
             std::swap(state(i), state(target_index));
         }
     }

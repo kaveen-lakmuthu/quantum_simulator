@@ -8,7 +8,8 @@ TEST(CircuitManagerTest, CircuitExecution) {
     CircuitManager circuit;
 
     circuit.addGate("H", 0);
-    circuit.addGate("CNOT", 0, 1);
+    // CNOT with control=0, target=1 (creates Bell state)
+    circuit.addGate("CNOT", 1, 0);  // targetQubit=1, controlQubit1=0
     circuit.executeCircuit(qubits);
 
     EXPECT_NEAR(std::abs(qubits.getState()(0)), 1.0 / std::sqrt(2), 1e-6);

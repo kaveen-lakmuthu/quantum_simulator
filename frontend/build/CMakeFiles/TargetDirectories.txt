@@ -1,4 +1,0 @@
-/home/kaveen/Documents/Projects/Finla Year Project/quantum_simulator/frontend/build/CMakeFiles/quantum_simulator_gui.dir
-/home/kaveen/Documents/Projects/Finla Year Project/quantum_simulator/frontend/build/CMakeFiles/edit_cache.dir
-/home/kaveen/Documents/Projects/Finla Year Project/quantum_simulator/frontend/build/CMakeFiles/rebuild_cache.dir
-/home/kaveen/Documents/Projects/Finla Year Project/quantum_simulator/frontend/build/CMakeFiles/quantum_simulator_gui_autogen.dir

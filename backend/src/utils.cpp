@@ -2,16 +2,22 @@
 #include <iostream>
 #include <bitset>
 
-// Normalize the quantum state vector
+// Normalizes quantum state vector to unit norm
+// @param state Reference to quantum state vector to normalize
 void normalizeState(Eigen::VectorXcd& state) {
-    state /= state.norm();
+    double norm = state.norm();
+    if (norm > NORM_TOLERANCE) {
+        state /= norm;
+    }
 }
 
-// Print the quantum state in a readable format
+// Prints quantum state amplitudes above threshold in ket notation
+// @param state Reference to const quantum state vector to display
 void printState(const Eigen::VectorXcd& state) {
     int dimension = state.size();
     for (int i = 0; i < dimension; ++i) {
-        if (std::abs(state(i)) > 1e-10) { // Ignore zero amplitudes
+        // Only display amplitudes above noise threshold to improve readability
+        if (std::abs(state(i)) > AMPLITUDE_DISPLAY_THRESHOLD) {
             std::cout << "| " << std::bitset<5>(i) << " ⟩ : " << state(i) << std::endl;
         }
     }

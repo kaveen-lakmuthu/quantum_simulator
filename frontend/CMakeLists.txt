@@ -7,7 +7,7 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 # Ensure Qt is included
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets Gui Test)
 
 # Explicitly include Eigen
 include_directories(/usr/include/eigen3)
@@ -30,3 +30,20 @@ add_executable(quantum_simulator_gui
 
 # Link Qt
 target_link_libraries(quantum_simulator_gui Qt6::Core Qt6::Widgets Qt6::Gui)
+
+# =============================
+# GUI Unit Tests (Qt Test)
+# =============================
+enable_testing()
+
+add_executable(gui_tests
+    tests/test_gui.cpp
+    src/circuit_view.cpp src/circuit_view.h
+    src/mainwindow.cpp src/mainwindow.h
+    src/results_window.cpp src/results_window.h
+    ${BACKEND_SRC}
+)
+
+target_link_libraries(gui_tests Qt6::Core Qt6::Widgets Qt6::Gui Qt6::Test)
+
+add_test(NAME GuiTests COMMAND gui_tests)
