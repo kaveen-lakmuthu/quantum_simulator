@@ -142,7 +142,8 @@ ApplicationWindow {
                 ColumnLayout {
                     anchors.fill: parent
                     anchors.margins: 15
-                    spacing: 10
+                    spacing: 8
+                    clip: true
 
                     Text {
                         text: "Single-Qubit Gates"
@@ -168,29 +169,33 @@ ApplicationWindow {
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: 6
 
                         Button {
                             Layout.fillWidth: true
-                            text: "Hadamard (H)"
+                            text: "H"
+                            font.pixelSize: 11
                             onClicked: backend.addGate("H", parseInt(singleQubitTarget.currentValue))
                         }
 
                         Button {
                             Layout.fillWidth: true
-                            text: "Pauli-X"
+                            text: "X"
+                            font.pixelSize: 11
                             onClicked: backend.addGate("X", parseInt(singleQubitTarget.currentValue))
                         }
 
                         Button {
                             Layout.fillWidth: true
-                            text: "Pauli-Y"
+                            text: "Y"
+                            font.pixelSize: 11
                             onClicked: backend.addGate("Y", parseInt(singleQubitTarget.currentValue))
                         }
 
                         Button {
                             Layout.fillWidth: true
-                            text: "Pauli-Z"
+                            text: "Z"
+                            font.pixelSize: 11
                             onClicked: backend.addGate("Z", parseInt(singleQubitTarget.currentValue))
                         }
                     }
@@ -210,14 +215,15 @@ ApplicationWindow {
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: 5
 
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: 5
                             Text {
-                                text: "Target:"
+                                text: "T:"
                                 color: "#cdd6f4"
+                                font.pixelSize: 10
                             }
                             ComboBox {
                                 id: targetQubit
@@ -230,8 +236,9 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             spacing: 5
                             Text {
-                                text: "Control:"
+                                text: "C:"
                                 color: "#cdd6f4"
+                                font.pixelSize: 10
                             }
                             ComboBox {
                                 id: controlQubit
@@ -243,6 +250,7 @@ ApplicationWindow {
                         Button {
                             Layout.fillWidth: true
                             text: "CNOT"
+                            font.pixelSize: 11
                             onClicked: {
                                 backend.addGate("CNOT", parseInt(targetQubit.currentValue), parseInt(controlQubit.currentValue))
                             }
@@ -251,37 +259,75 @@ ApplicationWindow {
                         Button {
                             Layout.fillWidth: true
                             text: "SWAP"
+                            font.pixelSize: 11
                             onClicked: {
                                 backend.addGate("SWAP", parseInt(targetQubit.currentValue), parseInt(controlQubit.currentValue))
                             }
                         }
                     }
 
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: "#45475a"
+                    }
+
+                    Text {
+                        text: "Measurement"
+                        color: "#89b4fa"
+                        font.bold: true
+                        font.pixelSize: 14
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 5
+                        Text {
+                            text: "Q:"
+                            color: "#cdd6f4"
+                            font.pixelSize: 10
+                        }
+                        ComboBox {
+                            id: measureQubit
+                            model: backend.getAvailableQubits()
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Button {
+                        Layout.fillWidth: true
+                        text: "Measure"
+                        font.pixelSize: 11
+                        onClicked: backend.addMeasurement(parseInt(measureQubit.currentValue))
+                    }
+
                     Item { Layout.fillHeight: true }
 
                     ColumnLayout {
                         Layout.fillWidth: true
-                        spacing: 8
+                        spacing: 6
 
                         Button {
-                            Layout.fillWidth: true
-                            text: "Execute"
-                            highlighted: true
-                            onClicked: {
-                                backend.executeCircuit()
-                                successMessage.visible = true
-                                successTimer.start()
+                                Layout.fillWidth: true
+                                text: "Execute"
+                                font.pixelSize: 11
+                                highlighted: true
+                                onClicked: {
+                                    backend.executeCircuit()
+                                    successMessage.visible = true
+                                    successTimer.start()
+                                }
                             }
-                        }
 
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Clear"
-                            onClicked: backend.clearCircuit()
+                            Button {
+                                Layout.fillWidth: true
+                                text: "Clear"
+                                font.pixelSize: 11
+                                onClicked: backend.clearCircuit()
+                            }
                         }
                     }
                 }
-            }
 
             // Middle - Circuit Visualization (Split View)
             Rectangle {
@@ -351,17 +397,82 @@ ApplicationWindow {
                             model: backend.circuitGates
                             
                             delegate: Rectangle {
+                                id: gateDelegate
                                 width: circuitListView.width
                                 height: 30
-                                color: "#313244"
+                                color: dragArea.drag.active ? "#45475a" : (dropArea.containsDrag ? "#5b6989" : "#313244")
                                 radius: 4
+                                opacity: dragArea.drag.active ? 0.7 : 1.0
+                                
+                                Drag.active: dragArea.drag.active
+                                Drag.source: gateDelegate
+                                Drag.hotSpot.x: width / 2
+                                Drag.hotSpot.y: height / 2
                                 
                                 Text {
-                                    anchors.centerIn: parent
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: 8
+                                    anchors.verticalCenter: parent.verticalCenter
                                     text: modelData
                                     color: "#cdd6f4"
                                     font.family: "Courier"
                                     font.pixelSize: 12
+                                }
+                                
+                                Button {
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 6
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: 22
+                                    height: 22
+                                    text: "🗑"
+                                    font.pixelSize: 12
+                                    
+                                    background: Rectangle {
+                                        color: parent.hovered ? "#f38ba8" : "transparent"
+                                        radius: 3
+                                        border.color: parent.hovered ? "#f38ba8" : "transparent"
+                                        border.width: 1
+                                    }
+                                    
+                                    contentItem: Text {
+                                        text: parent.text
+                                        color: parent.hovered ? "#1e1e2e" : "#cdd6f4"
+                                        font.pixelSize: parent.font.pixelSize
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    
+                                    onClicked: {
+                                        backend.removeGate(index)
+                                    }
+                                }
+                                
+                                MouseArea {
+                                    id: dragArea
+                                    anchors.fill: parent
+                                    anchors.rightMargin: 28
+                                    drag.target: parent
+                                    
+                                    onReleased: {
+                                        if (parent.Drag.drop() === Qt.IgnoreAction) {
+                                            parent.Drag.cancel()
+                                        }
+                                    }
+                                }
+                                
+                                DropArea {
+                                    id: dropArea
+                                    anchors.fill: parent
+                                    
+                                    onDropped: function(drop) {
+                                        if (drop.source && drop.source !== gateDelegate) {
+                                            var sourceIndex = circuitListView.model.indexOf(drop.source.children[0].text)
+                                            if (sourceIndex >= 0) {
+                                                backend.reorderGates(sourceIndex, index)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                             
@@ -404,34 +515,30 @@ ApplicationWindow {
                         border.color: "#45475a"
                         border.width: 1
 
-                        ScrollView {
+                        Text {
                             anchors.fill: parent
                             anchors.margins: 10
+                            wrapMode: Text.WordWrap
                             clip: true
-
-                            Text {
-                                width: parent.width
-                                text: {
-                                    var output = "Initial Quantum State:\n" + backend.initialState;
-                                    
-                                    if (backend.circuitGates.length > 0) {
-                                        output += "\nDefined Quantum Circuit:\n";
-                                        for (var i = 0; i < backend.circuitGates.length; i++) {
-                                            output += backend.circuitGates[i] + "\n";
-                                        }
+                            color: "#a6adc8"
+                            font.family: "Courier"
+                            font.pixelSize: 11
+                            text: {
+                                var output = "Initial Quantum State:\n" + backend.initialState;
+                                
+                                if (backend.circuitGates.length > 0) {
+                                    output += "\nDefined Quantum Circuit:\n";
+                                    for (var i = 0; i < backend.circuitGates.length; i++) {
+                                        output += backend.circuitGates[i] + "\n";
                                     }
-                                    
-                                    if (backend.circuitExecuted) {
-                                        output += "\nExecuting Quantum Circuit...\n";
-                                        output += "\nFinal Quantum State:\n" + backend.quantumState;
-                                    }
-                                    
-                                    return output;
                                 }
-                                color: "#a6adc8"
-                                font.family: "Courier"
-                                font.pixelSize: 11
-                                wrapMode: Text.WordWrap
+                                
+                                if (backend.circuitExecuted) {
+                                    output += "\nExecuting Quantum Circuit...\n";
+                                    output += "\nFinal Quantum State:\n" + backend.quantumState;
+                                }
+                                
+                                return output;
                             }
                         }
                     }

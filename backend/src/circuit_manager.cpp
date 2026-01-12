@@ -15,11 +15,56 @@ void CircuitManager::addGate(const std::string& gateName, int targetQubit,
     circuit.push_back({gateName, targetQubit, controlQubit1, controlQubit2});
 }
 
+/// Removes a gate from the circuit at specified index
+void CircuitManager::removeGate(int index) {
+    if (index < 0 || index >= static_cast<int>(circuit.size())) {
+        throw std::out_of_range("Gate index out of range: " + std::to_string(index));
+    }
+    circuit.erase(circuit.begin() + index);
+}
+
+/// Reorders a gate to a new position in the circuit
+void CircuitManager::reorderGates(int fromIndex, int toIndex) {
+    if (fromIndex < 0 || fromIndex >= static_cast<int>(circuit.size())) {
+        throw std::out_of_range("From index out of range: " + std::to_string(fromIndex));
+    }
+    if (toIndex < 0 || toIndex >= static_cast<int>(circuit.size())) {
+        throw std::out_of_range("To index out of range: " + std::to_string(toIndex));
+    }
+    
+    if (fromIndex == toIndex) {
+        return;  // No-op if source and destination are the same
+    }
+    
+    // Extract the gate to move
+    GateOperation gate = circuit[fromIndex];
+    
+    // Remove from current position
+    circuit.erase(circuit.begin() + fromIndex);
+    
+    // Adjust toIndex if needed (because we removed an element)
+    int adjustedToIndex = toIndex;
+    if (fromIndex < toIndex) {
+        adjustedToIndex--;
+    }
+    
+    // Insert at new position
+    circuit.insert(circuit.begin() + adjustedToIndex, gate);
+}
+
+/// Gets gate at specified index
+const GateOperation& CircuitManager::getGate(int index) const {
+    if (index < 0 || index >= static_cast<int>(circuit.size())) {
+        throw std::out_of_range("Gate index out of range: " + std::to_string(index));
+    }
+    return circuit[index];
+}
+
 // Executes all gates in the circuit sequentially on the quantum state
 // @param qubits Reference to QubitManager containing the quantum state
 // @throws std::invalid_argument if gate name is invalid or required qubits missing
 void CircuitManager::executeCircuit(QubitManager& qubits) {
-    for (const auto& gate : circuit) {
+    for (auto& gate : circuit) {
         try {
             // Convert gate name to uppercase for case-insensitive comparison
             std::string gateNameUpper;
@@ -38,6 +83,9 @@ void CircuitManager::executeCircuit(QubitManager& qubits) {
             }
             else if (gateNameUpper == "H" || gateNameUpper == "HADAMARD") {
                 gate_engine.applyHadamard(qubits, gate.target_qubit);
+            }
+            else if (gateNameUpper == "MEASURE") {
+                gate.measurement_result = gate_engine.measureQubit(qubits, gate.target_qubit);
             }
             // Two-qubit gates
             else if (gateNameUpper == "CNOT") {
@@ -85,6 +133,13 @@ void CircuitManager::printCircuit() const {
             // Three-qubit controlled gate
             std::cout << gate.gate_name << " (Controls: " << gate.control_qubit1 
                       << ", " << gate.control_qubit2 << ", Target: " << gate.target_qubit << ")\n";
+        } else if (gate.gate_name == "MEASURE") {
+            // Measurement operation
+            std::cout << gate.gate_name << " (Qubit " << gate.target_qubit << ")";
+            if (gate.measurement_result != -1) {
+                std::cout << " -> Result: " << gate.measurement_result;
+            }
+            std::cout << "\n";
         } else {
             // Single-qubit gates
             std::cout << gate.gate_name << " (Qubit " << gate.target_qubit << ")\n";

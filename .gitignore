@@ -41,6 +41,8 @@ CTestTestfile.cmake
 Makefile
 *.cmake
 !CMakeLists.txt
+build/
+frontend/build/
 
 # Qt autogen files
 *_autogen/
@@ -53,3 +55,4 @@ quantum_tests
 test_gates
 run_tests
 quantum_simulator_gui
+Testing/

@@ -59,6 +59,19 @@ public:
      */
     void applyHadamard(QubitManager& qubits, int targetQubit);
 
+    /**
+     * @brief Measures a qubit and collapses state
+     * @param qubits Reference to QubitManager
+     * @param targetQubit Target qubit index (0-based)
+     * @return Measurement result: 0 or 1
+     * @throws std::out_of_range if qubit index out of valid range
+     * 
+     * Collapses superposition by measuring a single qubit.
+     * Returns 0 or 1 based on probability of basis states.
+     * State is modified: amplitudes of unmeasured states are zero'd.
+     */
+    int measureQubit(QubitManager& qubits, int targetQubit);
+
     // Multi-qubit gates
 
     /**

@@ -11,7 +11,7 @@
  * @brief Represents a single gate operation in a quantum circuit
  */
 struct GateOperation {
-    /// Gate identifier ("H", "X", "Y", "Z", "CNOT", "SWAP", "TOFFOLI")
+    /// Gate identifier ("H", "X", "Y", "Z", "CNOT", "SWAP", "TOFFOLI", "MEASURE")
     std::string gate_name;
     
     /// Primary target qubit index
@@ -22,6 +22,9 @@ struct GateOperation {
     
     /// Second control qubit index (-1 if unused)
     int control_qubit2;
+    
+    /// Measurement result (-1 if not yet measured, 0 or 1 if measured)
+    mutable int measurement_result = -1;
 };
 
 /**
@@ -46,18 +49,52 @@ private:
 public:
     /**
      * @brief Adds a gate to the circuit
-     * @param gateName Gate identifier ("H", "X", "Y", "Z", "CNOT", "SWAP", "TOFFOLI")
+     * @param gateName Gate identifier ("H", "X", "Y", "Z", "CNOT", "SWAP", "TOFFOLI", "MEASURE")
      * @param targetQubit Target qubit index (0-based, required for all gates)
      * @param controlQubit1 First control qubit (default: -1 = unused)
      * @param controlQubit2 Second control qubit (default: -1 = unused)
      * @throws std::invalid_argument if gate_name unknown or target_qubit < 0
      * 
-     * Single-qubit gates: use targetQubit only
-     * Two-qubit gates: use controlQubit1 and targetQubit
-     * Three-qubit gates: use controlQubit1, controlQubit2, and targetQubit
+     * Single-qubit gates: use targetQubit only (H, X, Y, Z, MEASURE)
+     * Two-qubit gates: use controlQubit1 and targetQubit (CNOT, SWAP)
+     * Three-qubit gates: use controlQubit1, controlQubit2, and targetQubit (TOFFOLI)
      */
     void addGate(const std::string& gateName, int targetQubit, 
                  int controlQubit1 = -1, int controlQubit2 = -1);
+
+    /**
+     * @brief Removes a gate from the circuit at specified index
+     * @param index Index of gate to remove (0-based)
+     * @throws std::out_of_range if index >= circuit size
+     * 
+     * Removes the gate at the specified position and shifts remaining gates.
+     */
+    void removeGate(int index);
+
+    /**
+     * @brief Reorders a gate to a new position in the circuit
+     * @param fromIndex Current index of gate to move (0-based)
+     * @param toIndex Desired index position (0-based)
+     * @throws std::out_of_range if either index >= circuit size
+     * 
+     * Moves the gate from fromIndex to toIndex, shifting adjacent gates accordingly.
+     * For example: reorderGates(2, 0) moves gate at position 2 to position 0.
+     */
+    void reorderGates(int fromIndex, int toIndex);
+
+    /**
+     * @brief Gets number of gates in circuit
+     * @return Number of gates currently in circuit
+     */
+    int getCircuitSize() const { return circuit.size(); }
+
+    /**
+     * @brief Gets gate at specified index
+     * @param index Gate index (0-based)
+     * @return Const reference to GateOperation at index
+     * @throws std::out_of_range if index >= circuit size
+     */
+    const GateOperation& getGate(int index) const;
 
     /**
      * @brief Executes all gates in circuit in sequence

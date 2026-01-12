@@ -79,6 +79,20 @@ void BackendBridge::addGate(const QString &gateName, int target, int control1, i
     }
 }
 
+/// Adds measurement operation to circuit
+/// @param target Qubit index to measure
+void BackendBridge::addMeasurement(int target) {
+    try {
+        circuit.addGate("MEASURE", target);
+        
+        QString gateDesc = QString("MEASURE(q%1)").arg(target);
+        circuitGateList.append(gateDesc);
+        emit circuitChanged(getCircuitDescription());
+    } catch (const std::exception& e) {
+        emit executionError(QString("Failed to add measurement: %1").arg(e.what()));
+    }
+}
+
 /// Executes circuit and updates quantum state
 /// Resets to initial state before execution
 void BackendBridge::executeCircuit() {
@@ -117,6 +131,81 @@ void BackendBridge::clearCircuit() {
     emit quantumStateChanged(getQuantumState());
     emit initialStateChanged();
     emit circuitExecutedChanged();
+}
+
+/// Removes a gate from the circuit at specified index
+/// @param index Gate index to remove (0-based)
+void BackendBridge::removeGate(int index) {
+    try {
+        circuit.removeGate(index);
+        
+        // Update gate list
+        circuitGateList.clear();
+        for (int i = 0; i < circuit.getCircuitSize(); ++i) {
+            const auto& gate = circuit.getGate(i);
+            QString gateDesc;
+            if (gate.control_qubit1 >= 0 && gate.control_qubit2 >= 0) {
+                gateDesc = QString("%1(ctrl1=%2, ctrl2=%3, target=%4)")
+                    .arg(QString::fromStdString(gate.gate_name))
+                    .arg(gate.control_qubit1).arg(gate.control_qubit2).arg(gate.target_qubit);
+            } else if (gate.control_qubit1 >= 0) {
+                gateDesc = QString("%1(ctrl=%2, target=%3)")
+                    .arg(QString::fromStdString(gate.gate_name))
+                    .arg(gate.control_qubit1).arg(gate.target_qubit);
+            } else {
+                gateDesc = QString("%1(q%2)")
+                    .arg(QString::fromStdString(gate.gate_name)).arg(gate.target_qubit);
+            }
+            circuitGateList.append(gateDesc);
+        }
+        
+        circuit_executed = false;
+        emit circuitChanged(getCircuitDescription());
+        emit circuitExecutedChanged();
+    } catch (const std::exception& e) {
+        emit executionError(QString("Failed to remove gate: %1").arg(e.what()));
+    }
+}
+
+/// Reorders a gate to a new position in the circuit
+/// @param fromIndex Current index of gate (0-based)
+/// @param toIndex Target index for gate (0-based)
+void BackendBridge::reorderGates(int fromIndex, int toIndex) {
+    try {
+        circuit.reorderGates(fromIndex, toIndex);
+        
+        // Update gate list
+        circuitGateList.clear();
+        for (int i = 0; i < circuit.getCircuitSize(); ++i) {
+            const auto& gate = circuit.getGate(i);
+            QString gateDesc;
+            if (gate.control_qubit1 >= 0 && gate.control_qubit2 >= 0) {
+                gateDesc = QString("%1(ctrl1=%2, ctrl2=%3, target=%4)")
+                    .arg(QString::fromStdString(gate.gate_name))
+                    .arg(gate.control_qubit1).arg(gate.control_qubit2).arg(gate.target_qubit);
+            } else if (gate.control_qubit1 >= 0) {
+                gateDesc = QString("%1(ctrl=%2, target=%3)")
+                    .arg(QString::fromStdString(gate.gate_name))
+                    .arg(gate.control_qubit1).arg(gate.target_qubit);
+            } else {
+                gateDesc = QString("%1(q%2)")
+                    .arg(QString::fromStdString(gate.gate_name)).arg(gate.target_qubit);
+            }
+            circuitGateList.append(gateDesc);
+        }
+        
+        circuit_executed = false;
+        emit circuitChanged(getCircuitDescription());
+        emit circuitExecutedChanged();
+    } catch (const std::exception& e) {
+        emit executionError(QString("Failed to reorder gate: %1").arg(e.what()));
+    }
+}
+
+/// Returns circuit size
+/// @return Number of gates in circuit
+int BackendBridge::getCircuitSize() const {
+    return circuit.getCircuitSize();
 }
 
 /// Returns list of available qubit indices as strings

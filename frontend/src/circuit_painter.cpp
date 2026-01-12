@@ -81,18 +81,29 @@ void CircuitPainter::drawGate(QPainter *painter, const QString &gateDesc, int ga
     
     // Single-qubit gate
     if (control1 < 0) {
+        // Determine box width based on gate name
+        int boxWidth = 35;
+        int boxHeight = 30;
+        if (gateName == "MEASURE") {
+            boxWidth = 55;
+        }
+        
         // Draw gate box
         painter->setPen(QPen(QColor("#89b4fa"), 2));
         painter->setBrush(QBrush(QColor("#313244")));
-        painter->drawRect(x - 15, yTarget - 15, 30, 30);
+        painter->drawRect(x - boxWidth/2, yTarget - boxHeight/2, boxWidth, boxHeight);
         
         // Draw gate label
         painter->setPen(QColor("#cdd6f4"));
         QFont font = painter->font();
         font.setBold(true);
-        font.setPointSize(9);
+        if (gateName == "MEASURE") {
+            font.setPointSize(7);
+        } else {
+            font.setPointSize(9);
+        }
         painter->setFont(font);
-        painter->drawText(QRect(x - 15, yTarget - 15, 30, 30), 
+        painter->drawText(QRect(x - boxWidth/2, yTarget - boxHeight/2, boxWidth, boxHeight), 
                          Qt::AlignCenter, gateName);
     }
     // Multi-qubit gate (CNOT, SWAP)

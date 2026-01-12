@@ -36,11 +36,15 @@ public:
     bool isCircuitExecuted() const;
     Q_INVOKABLE int getMaxQubits() const { return 5; }
     Q_INVOKABLE int getMinQubits() const { return 1; }
+    Q_INVOKABLE int getCircuitSize() const;
 
     // QML-exposed methods
     Q_INVOKABLE void setQubitCount(int count);
     Q_INVOKABLE void setInitialState(const QString &stateString);
     Q_INVOKABLE void addGate(const QString &gateName, int target, int control1 = -1, int control2 = -1);
+    Q_INVOKABLE void addMeasurement(int target);
+    Q_INVOKABLE void removeGate(int index);
+    Q_INVOKABLE void reorderGates(int fromIndex, int toIndex);
     Q_INVOKABLE void executeCircuit();
     Q_INVOKABLE void clearCircuit();
     Q_INVOKABLE QStringList getAvailableQubits() const;
