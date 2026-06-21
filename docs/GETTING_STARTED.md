@@ -33,11 +33,12 @@ sudo apt install build-essential cmake git libeigen3-dev libgtest-dev
 sudo apt install qt6-base-dev
 ```
 
-**Arch Linux:**
+**Fedora Linux:**
 ```bash
-sudo pacman -S base-devel cmake git eigen gtest
-sudo pacman -S qt6-base  # Optional, for GUI
+sudo dnf install gcc-c++ make cmake git eigen3-devel gtest-devel
+sudo dnf install qt6-qtbase-devel qt6-qtdeclarative-devel  # Optional, for GUI
 ```
+
 
 ### Step 2: Clone the Repository
 ```bash
@@ -110,21 +111,21 @@ All tests should pass (8/8).
 Install Google Test:
 ```bash
 sudo apt install libgtest-dev  # Ubuntu/Debian
-sudo pacman -S gtest           # Arch
+sudo dnf install gtest-devel   # Fedora
 ```
 
 ### "eigen3/Eigen/Dense: No such file or directory"
 Install Eigen3:
 ```bash
 sudo apt install libeigen3-dev  # Ubuntu/Debian
-sudo pacman -S eigen            # Arch
+sudo dnf install eigen3-devel   # Fedora
 ```
 
 ### "Qt6 not found"
 Install Qt6 development libraries:
 ```bash
-sudo apt install qt6-base-dev   # Ubuntu/Debian
-sudo pacman -S qt6-base         # Arch
+sudo apt install qt6-base-dev                     # Ubuntu/Debian
+sudo dnf install qt6-qtbase-devel qt6-qtdeclarative-devel  # Fedora
 ```
 
 ### CMake configuration fails

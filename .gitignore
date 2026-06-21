@@ -56,6 +56,7 @@ test_gates
 run_tests
 quantum_simulator_gui
 Testing/
+quantum_simulator
 
 # IDEs and editors
 .idea/
