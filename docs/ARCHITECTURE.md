@@ -6,75 +6,30 @@ This document describes the high-level architecture and design of the Quantum Ci
 
 The simulator follows a layered architecture with clear separation between backend (quantum simulation logic) and frontend (user interface).
 
-```
-┌──────────────────────────────────────────────────┐
-│   Qt6 QML Frontend (Modern Interface)            │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ MainWindow.qml (Declarative UI)              │ │
-│ │  - Three-panel responsive layout             │ │
-│ │  - Qubit selector (1-5 qubits)               │ │
-│ │  - Gate button controls (H,X,Y,Z,CNOT,SWAP)  │ │
-│ │  - Target/Control qubit selectors            │ │
-│ │  - Execute and Clear buttons                 │ │
-│ └──────────────────────────────────────────────┘ │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ CircuitPainter (Custom QML Component)        │ │
-│ │  - Renders qubit lines with |q0⟩ labels      │ │
-│ │  - Draws single-qubit gate boxes             │ │
-│ │  - Shows CNOT (control dot + target circle)  │ │
-│ │  - Displays SWAP (X marks)                   │ │
-│ └──────────────────────────────────────────────┘ │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ State Display Panel (Real-time output)       │ │
-│ │  - Initial quantum state                     │ │
-│ │  - Defined circuit gates list                │ │
-│ │  - Execution status                          │ │
-│ │  - Final quantum state (after execution)     │ │
-│ └──────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────┘
-         ↓ (Qt properties/signals/slots)
-┌──────────────────────────────────────────────────┐
-│    BackendBridge (C++/QML Bridge)                │
-│  - Q_PROPERTY for data binding                   │
-│  - Q_INVOKABLE methods for gate operations       │
-│  - Signal/slot for async communication           │
-│  - Error/success signal handling                 │
-└──────────────────────────────────────────────────┘
-         ↓ (C++ method calls)
-┌──────────────────────────────────────────────────┐
-│    C++ Backend Core Simulation                   │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ QubitManager                                 │ │
-│ │  - Manages quantum state vector              │ │
-│ │  - State initialization                      │ │
-│ │  - State representation                      │ │
-│ └──────────────────────────────────────────────┘ │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ GateEngine                                   │ │
-│ │  - Single-qubit gate operations              │ │
-│ │  - Multi-qubit gate operations               │ │
-│ │  - Gate validation & execution               │ │
-│ └──────────────────────────────────────────────┘ │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ CircuitManager                               │ │
-│ │  - Circuit gate sequence storage             │ │
-│ │  - Circuit execution orchestration           │ │
-│ │  - Gate application ordering                 │ │
-│ └──────────────────────────────────────────────┘ │
-│ ┌──────────────────────────────────────────────┐ │
-│ │ Utilities                                    │ │
-│ │  - State normalization                       │ │
-│ │  - State printing                            │ │
-│ │  - Helper functions                          │ │
-│ └──────────────────────────────────────────────┘ │
-└──────────────────────────────────────────────────┘
-         ↓ (Eigen library)
-┌──────────────────────────────────────────────────┐
-│    Mathematical Foundation                       │
-│  - Complex number vectors (VectorXcd)            │
-│  - Linear algebra operations                     │
-│  - SIMD optimizations                            │
-└──────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Frontend["Qt6 QML Frontend (Modern Interface)"]
+        direction TB
+        MW["<strong>MainWindow.qml (Declarative UI)</strong><br>• Three-panel responsive layout<br>• Qubit selector (1-5 qubits)<br>• Gate button controls<br>• Target/Control qubit selectors<br>• Execute and Clear buttons"]
+        CP["<strong>CircuitPainter (Custom QML Component)</strong><br>• Renders qubit lines with |q0⟩ labels<br>• Draws single-qubit gate boxes<br>• Shows CNOT (control dot + target circle)<br>• Displays SWAP (X marks)"]
+        SD["<strong>State Display Panel (Real-time output)</strong><br>• Initial quantum state<br>• Defined circuit gates list<br>• Execution status<br>• Final quantum state"]
+    end
+
+    BB["<strong>BackendBridge (C++/QML Bridge)</strong><br>• Q_PROPERTY for data binding<br>• Q_INVOKABLE methods for gate operations<br>• Signal/slot for async communication<br>• Error/success signal handling"]
+
+    subgraph Backend["C++ Backend Core Simulation"]
+        direction TB
+        QM["<strong>QubitManager</strong><br>• Manages quantum state vector<br>• State initialization<br>• State representation"]
+        GE["<strong>GateEngine</strong><br>• Single-qubit gate operations<br>• Multi-qubit gate operations<br>• Gate validation & execution"]
+        CM["<strong>CircuitManager</strong><br>• Circuit gate sequence storage<br>• Circuit execution orchestration<br>• Gate application ordering"]
+        UT["<strong>Utilities</strong><br>• State normalization<br>• State printing<br>• Helper functions"]
+    end
+
+    MF["<strong>Mathematical Foundation</strong><br>• Complex number vectors (VectorXcd)<br>• Linear algebra operations<br>• SIMD optimizations"]
+
+    Frontend -->|Qt properties/signals/slots| BB
+    BB -->|C++ method calls| Backend
+    Backend -->|Eigen library| MF
 ```
 
 ## Component Details
@@ -338,39 +293,52 @@ The modern QML frontend provides a declarative, responsive interface for quantum
 
 ### Data Flow
 
-```
-User clicks gate button
-    ↓
-QML calls: backend.addGate(...)
-    ↓
-BackendBridge::addGate()
-    ↓
-CircuitManager adds gate
-    ↓
-BackendBridge emits circuitChanged()
-    ↓
-QML property circuitGates updates
-    ↓
-MainWindow.qml re-renders
-    ├→ CircuitPainter repaints diagram
-    └→ ListView updates gate list
+#### Gate Addition Flow
 
-User clicks Execute
-    ↓
-QML calls: backend.executeCircuit()
-    ↓
-BackendBridge::executeCircuit()
-    ├→ Save initial state
-    ├→ GateEngine applies each gate via CircuitManager
-    └→ Emit circuitExecutedChanged(), quantumStateChanged()
-    ↓
-QML properties update
-    ↓
-MainWindow.qml shows complete execution flow
-    ├→ Initial state (from property)
-    ├→ Circuit definition (from gates list)
-    ├→ Execution status message
-    └→ Final state (from quantumState property)
+```mermaid
+sequenceDiagram
+    actor User
+    participant QML as MainWindow.qml
+    participant BB as BackendBridge (C++)
+    participant CM as CircuitManager (C++)
+    
+    User->>QML: Click Gate Button
+    QML->>BB: addGate(name, target, ctrl1, ctrl2)
+    BB->>CM: addGate(name, target, ctrl1, ctrl2)
+    CM-->>BB: Gate Added
+    BB->>BB: emit circuitChanged()
+    BB-->>QML: circuitGates property updated
+    QML->>QML: Re-render
+    Note over QML: CircuitPainter repaints diagram<br/>ListView updates gate list
+```
+
+#### Circuit Execution Flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant QML as MainWindow.qml
+    participant BB as BackendBridge (C++)
+    participant CM as CircuitManager (C++)
+    participant GE as GateEngine (C++)
+    participant QM as QubitManager (C++)
+
+    User->>QML: Click Execute
+    QML->>BB: executeCircuit()
+    Note over BB: Save initial state
+    BB->>CM: executeCircuit(qubits)
+    loop For each gate in circuit
+        CM->>GE: applyGate(qubits, details)
+        GE->>QM: modify state vector
+        QM-->>GE: State updated
+        GE-->>CM: Gate applied
+    end
+    CM-->>BB: Execution finished
+    BB->>BB: emit circuitExecutedChanged()
+    BB->>BB: emit quantumStateChanged()
+    BB-->>QML: Properties updated
+    QML->>QML: Show complete execution flow
+    Note over QML: Display initial state, circuit gates list,<br/>execution status, and final quantum state
 ```
 
 ### Resource Management
