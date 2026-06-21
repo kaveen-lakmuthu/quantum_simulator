@@ -118,8 +118,8 @@ Click any gate button to add it to the circuit:
 
 ```
 ┌─ Available Gates ──────────────────────────┐
-│ [Hadamard] [Pauli-X] [Pauli-Y] [Pauli-Z] │
-│ [CNOT]     [SWAP]    [Toffoli]            │
+│ [Hadamard] [Pauli-X] [Pauli-Y] [Pauli-Z]   │
+│ [CNOT]     [SWAP]    [Toffoli]             │
 └────────────────────────────────────────────┘
 ```
 
